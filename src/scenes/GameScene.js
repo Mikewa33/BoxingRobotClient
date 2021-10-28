@@ -49,7 +49,6 @@ export default class GameScene extends Phaser.Scene {
   createGroups() {
   }
 
-
   createInput() {
     this.cursors = this.input.keyboard.createCursorKeys();
   }
