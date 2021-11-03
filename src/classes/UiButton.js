@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 
 export default class UiButton extends Phaser.GameObjects.Container {
-  constructor(scene, x, y, key, hoverKey, text, targetCallback) {
+  constructor(scene, x, y, key, hoverKey, text, targetCallback, scale=1.4) {
     super(scene, x, y);
     this.scene = scene; // the scene this container will be added to
     this.x = x; // the x position of our container
@@ -14,18 +14,18 @@ export default class UiButton extends Phaser.GameObjects.Container {
     this.targetCallback = targetCallback;
 
     // create our Ui Button
-    this.createButton();
+    this.createButton(scale);
     // add this container to our Phaser Scene
     this.scene.add.existing(this);
   }
 
-  createButton() {
+  createButton(scale) {
     // create play game button
     this.button = this.scene.add.image(0, 0, 'button1');
     // make button interactive
     this.button.setInteractive();
     // scale the button
-    this.button.setScale(1.4);
+    this.button.setScale(scale);
 
     // create the button text
     this.buttonText = this.scene.add.text(0, 0, this.text, { fontSize: '26px', fill: '#fff' });

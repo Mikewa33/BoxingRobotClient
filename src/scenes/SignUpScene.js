@@ -30,8 +30,6 @@ export default class SignUpScene extends CredentialsBaseScene {
     const userNameValue = this.userNameInput.value;
 
     if (loginValue && passwordValue && userNameValue) {
-      console.log("POSTING DATA")
-      console.log(SERVER_URL)
       postData(`${SERVER_URL}/signup`, { email: loginValue, password: passwordValue, username: userNameValue })
         .then((response) => {
           if (response.status === 200) {
@@ -39,13 +37,11 @@ export default class SignUpScene extends CredentialsBaseScene {
             this.startScene('Login');
           } else {
             console.log(response);
-            console.log("RESPONSE BAD")
             window.alert('Invalid username or password.');
           }
         })
         .catch((error) => {
           console.log(error);
-          console.log("NOT EVEN RESPONSE")
           window.alert('Invalid username or password.');
         });
     } else {

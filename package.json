@@ -5,7 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "build": "npx webpack --mode production",
-    "start": "npm run build && npx webpack-dev-server --port=8000 --mode development",
+    "start": "npm run build && npx webpack-dev-server --port=8080 --mode development",
     "lint": "npx eslint src/ --fix",
     "bundle": "./bundle.sh"
   },

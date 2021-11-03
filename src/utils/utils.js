@@ -11,6 +11,17 @@ export function postData(url, data = {}) {
   }).then(response => response.json());
 }
 
+export function getData(url) {
+  return fetch(url, {
+    method: 'GET',
+    cache: 'no-cache',
+    credentials: 'include', // needed for cookies
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  }).then(response => response.json());
+}
+
 export function createDiv(className) {
   const div = document.createElement('div');
   div.className = className;
