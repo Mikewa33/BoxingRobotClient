@@ -20,6 +20,7 @@ export default class BootScene extends Phaser.Scene {
     // load the map tileset image
     this.load.image('background', 'assets/level/background-image.jpg');
     this.load.image('inventoryBackground', 'assets/images/ui/panel_dialogue.png');
+    this.load.image('nextButton', 'assets/images/ui/next_button.png');
   }
 
   loadSpriteSheets() {
