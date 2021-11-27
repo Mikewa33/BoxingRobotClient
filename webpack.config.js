@@ -30,4 +30,8 @@ module.exports = {
       SERVER_URL: JSON.stringify(process.env.SERVER_URL),
     }),
   ],
+  node: {
+    net: 'empty',
+    fs: 'empty'
+  }
 };

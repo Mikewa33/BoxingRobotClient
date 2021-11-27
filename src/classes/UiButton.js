@@ -38,7 +38,7 @@ export default class UiButton extends Phaser.GameObjects.Container {
 
     // listen for events
     this.button.on('pointerdown', () => {
-      this.targetCallback();
+      this.targetCallback(this.scene);
     });
 
     this.button.on('pointerover', () => {

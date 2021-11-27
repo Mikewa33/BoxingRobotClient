@@ -5,11 +5,12 @@ export default class PartCard extends Phaser.Physics.Arcade.Image {
     super(scene, x, y, key, frame);
     this.scene = scene; // the scene this game object will be added to
     this.id = id;
+    this.type = "Part";
 
     // add the player to our existing scene
     this.scene.add.existing(this).setInteractive();
     // scale the game object
-    this.setScale(2);
+    this.setScale(0.05);
   }
 
   makeActive() {

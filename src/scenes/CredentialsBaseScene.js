@@ -7,7 +7,7 @@ import {
 export default class CredentialsBaseScene extends Phaser.Scene {
   createUi(btn1Text, btn1Target, btn2Text, btn2Target, btn3Text, btn3Target) {
     // create title text
-    this.titleText = this.add.text(this.scale.width / 2, this.scale.height / 8, 'Robot Boxing', { fontSize: '64px', fill: '#fff' });
+    this.titleText = this.add.text(this.scale.width / 2, this.scale.height / 8, 'Robot', { fontSize: '64px', fill: '#fff' });
     this.titleText.setOrigin(0.5);
 
     this.button1 = new UiButton(
