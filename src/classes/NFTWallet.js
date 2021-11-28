@@ -170,7 +170,6 @@ export default class NFTWallet {
     }*/
 
     async handleMintRobot(game, nftWallet, robotID) {
-        console.log(nftWallet)
         const { mint, ROBOT_PRICE } = nftWallet.robotInstance.methods;
     
         let robotPrice = await ROBOT_PRICE().call();
@@ -206,6 +205,24 @@ export default class NFTWallet {
       await purchaseAccessory(nftWallet.account, accessoryID).send({
         from: nftWallet.account,
         value: accPrice,
+      }).then(object => {
+        let partType = null;
+        switch(accessoryID) {
+          case 1:
+            partType = 'Buzzsaw'
+            break;
+          case 2:
+            partType = 'Sword'
+            break;
+          case 3:
+            partType = 'Shield'
+            break;
+          case 4:
+            partType = 'AI Chip'
+            break;
+        }
+        game.makePartCard(game, 1, partType);
+        game.reorderCarousel(game);
       }).catch(err => {
         console.log(err);
       });

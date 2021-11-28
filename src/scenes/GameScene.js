@@ -58,7 +58,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
-    this.add.image(0, 0, 'background').setOrigin(0,0).setScale(1.5);
+    this.add.image(0, 0, 'background').setOrigin(0,0).setScale(.06);
     this.add.image(40, this.scale.height - 150, 'inventoryBackground').setOrigin(0,0).setScale(0.25);
     this.createUi();
     this.createAudio();
@@ -85,7 +85,7 @@ export default class GameScene extends Phaser.Scene {
     })
 
     this.input.on('dragenter', function (pointer, gameObject, dropZone) {
-      if ((dropZone.name == "Inventory" || dropZone.name == "Training" || dropZone.name == "Tournaments") && gameObject.type == "Robot") {
+      if ((dropZone.name == "Training" || dropZone.name == "Tournaments") && gameObject.type == "Robot") {
         dropZone.graphics.lineStyle(2, 0x00ffff);
         dropZone.graphics.strokeRect(dropZone.x - dropZone.input.hitArea.width / 2, dropZone.y - dropZone.input.hitArea.height / 2, dropZone.input.hitArea.width, dropZone.input.hitArea.height);
       }
@@ -96,7 +96,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.input.on('dragleave', function (pointer, gameObject, dropZone) {
-      if ((dropZone.name == "Inventory" || dropZone.name == "Training" || dropZone.name == "Tournaments") && gameObject.type == "Robot") {
+      if ((dropZone.name == "Training" || dropZone.name == "Tournaments") && gameObject.type == "Robot") {
         dropZone.graphics.lineStyle(2, 0xffff00);
         dropZone.graphics.strokeRect(dropZone.x - dropZone.input.hitArea.width / 2, dropZone.y - dropZone.input.hitArea.height / 2, dropZone.input.hitArea.width, dropZone.input.hitArea.height);
       }
@@ -252,11 +252,15 @@ export default class GameScene extends Phaser.Scene {
   };
 
   submitBot(game) {
-    postData(`${SERVER_URL}/training`, { 'botId': game.trainingItem.id }).then((response) => {
-      if (response.status == 200) {
-
-      }
-    });
+    if (game.trainingItem) {
+      postData(`${SERVER_URL}/training`, { 'botId': game.trainingItem.id }).then((response) => {
+        if (response.status == 200) {
+          game.trainingUi = game.trainingUi.filter(el => el.id != game.trainingItem.id);
+          game.robotsInventory.push(game.trainingItem);
+          game.reorderCarousel(game);
+        }
+      });
+    }
   }
 
   showTournaments() {
@@ -633,33 +637,68 @@ export default class GameScene extends Phaser.Scene {
   }
 
   startTournament(game) {
-    let botObject = game.tournamentBot;
-    postData(`${SERVER_URL}/set-battle`, { 
-      'bot': { 
-        "id": botObject.id, 
-        "health": botObject.health,
-        "ai": botObject.ai,
-        "agility": botObject.agility,
-        "strength": botObject.strength,
-        "defense": botObject.defense
-      }}).then((response) => {
-      if (response.status == 200) {
-        let combatLog = []
-        let matcheIndex = 1;
-        response.matches.forEach((match) => {
-          if (match.robotOne.id == botObject.id || match.robotTwo.id == botObject.id) {
-            combatLog.push(`Match ${matcheIndex} Starting: ${match.robotOne.id} vs ${match.robotTwo.id}`)
-            match.turns.forEach(turn => {
-              combatLog.push(turn);
-            })
-            combatLog.push(`And the Winner is ${match.winner.id}`)
-            combatLog.push("------------------")
-          }
-        })
-        console.log(combatLog);
-        game.resultText.setText(combatLog);
-      }
-    });
+    if (game.tournamentBot) {
+      let botObject = game.tournamentBot;
+      let tournamentPartFirst = game.tournamentPart1;
+      let tournamentPartSecond = game.tournamentPart2;
+      if (tournamentPartFirst) {
+        switch (tournamentPartFirst.partType) {
+          case "Saw":
+            botObject.agility = parseInt(botObject.agility) + 5;
+            break;
+          case "Sword":
+            botObject.strength = parseInt(botObject.agility) + 5;
+            break;
+          case "Shield":
+            botObject.defense = parseInt(botObject.defense) + 5;
+          break;
+          case "AI Chip":
+            botObject.ai = parseInt(botObject.ai) + 5;
+          break;
+        }
+      };
+      if (tournamentPartSecond) {
+        switch (tournamentPartSecond.partType) {
+          case "Saw":
+            botObject.agility = parseInt(botObject.agility) + 5;
+            break;
+          case "Sword":
+            botObject.strength = parseInt(botObject.agility) + 5;
+            break;
+          case "Shield":
+            botObject.defense = parseInt(botObject.defense) + 5;
+          break;
+          case "AI Chip":
+            botObject.ai = parseInt(botObject.ai) + 5;
+          break;
+        }
+      };
+      postData(`${SERVER_URL}/set-battle`, { 
+        'bot': { 
+          "id": botObject.id, 
+          "health": botObject.health,
+          "ai": botObject.ai,
+          "agility": botObject.agility,
+          "strength": botObject.strength,
+          "defense": botObject.defense
+        }}).then((response) => {
+        if (response.status == 200) {
+          let combatLog = []
+          let matcheIndex = 1;
+          response.matches.forEach((match) => {
+            if (match.robotOne.id == botObject.id || match.robotTwo.id == botObject.id) {
+              combatLog.push(`Match ${matcheIndex} Starting: ${match.robotOne.id} vs ${match.robotTwo.id}`)
+              match.turns.forEach(turn => {
+                combatLog.push(turn);
+              })
+              combatLog.push(`And the Winner is ${match.winner.id}`)
+              combatLog.push("------------------")
+            }
+          })
+          game.resultText.setText(combatLog);
+        }
+      });
+    }
   }
 
   makePartCard(game, amount, type) {
@@ -673,11 +712,20 @@ export default class GameScene extends Phaser.Scene {
 
   async resyncBots(game) {
     let bots = await game.nftWallet.walletOwner();
-    game.getUserBots(game, bots)
+    game.addUserBots(game, bots[bots.length - 1])
+    game.reorderCarousel(game);
+  }
+
+  addUserBots(game, robot) {
+    let robotCard = new RobotCard(game, 120, game.scale.height - 80, robot.robotType, 0, robot.id, robot.ai, robot.agility, robot.health, robot.defense, robot.strength)
+    robotCard.makeInvisible();
+    robotCard.setName(robot.name);
+    game.input.setDraggable(robotCard)
+    game.robots.push(robotCard)
+    game.robotsInventory.push(robotCard);
   }
 
   getUserBots(game, robots) {
-    console.log(robots)
     robots.forEach(robot => {
       if(game.robotsInventory.filter(el => el.id == robot.id).length == 0) {
         //game.load.spritesheet(robot.id.toString(), robot.imageRobot, { frameWidth: 64, frameHeight: 84 }); 
@@ -798,11 +846,6 @@ export default class GameScene extends Phaser.Scene {
 
     this.inventoryDropZone = this.add.zone(400, this.scale.height - 85, 700, 100).setRectangleDropZone(700, 100);
     this.inventoryDropZone.setName("Inventory");
-    this.inventoryDropZoneGraphics = this.add.graphics();
-    
-    this.inventoryDropZoneGraphics.lineStyle(2, 0xffff00);
-    this.inventoryDropZoneGraphics.strokeRect(this.inventoryDropZone.x - this.inventoryDropZone.input.hitArea.width / 2, this.inventoryDropZone.y - this.inventoryDropZone.input.hitArea.height / 2, this.inventoryDropZone.input.hitArea.width, this.inventoryDropZone.input.hitArea.height);
-    this.inventoryDropZone.graphics = this.inventoryDropZoneGraphics;
   }
 
   displayPartsInventory(game){

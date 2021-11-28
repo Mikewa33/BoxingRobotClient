@@ -7,7 +7,7 @@ export default class LoginScene extends CredentialsBaseScene {
   }
 
   create() {
-    this.createUi('Login', this.login.bind(this), 'Forgot Password', this.startScene.bind(this, 'ForgotPassword'), 'Back', this.startScene.bind(this, 'Title'));
+    this.createUi('Login', this.login.bind(this), 'Back', this.startScene.bind(this, 'Title'));// , 'Forgot Password', this.startScene.bind(this, 'ForgotPassword')
   }
 
   login() {

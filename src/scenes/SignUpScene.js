@@ -18,9 +18,7 @@ export default class SignUpScene extends CredentialsBaseScene {
     this.userNameInput = createInputField('text', 'username', 'username', 'login-input', 'Username');
 
     this.div.append(createBrElement());
-    this.div.append(createBrElement());
     this.div.append(this.userNameLabel);
-    this.div.append(createBrElement());
     this.div.append(this.userNameInput);
   }
 

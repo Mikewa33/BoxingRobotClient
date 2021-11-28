@@ -19,7 +19,6 @@ export default class ForgotPasswordScene extends CredentialsBaseScene {
     if (loginValue) {
       postData(`${SERVER_URL}/forgot-password`, { email: loginValue })
         .then((response) => {
-          console.log(response.message);
           window.alert('If an account was found, a password reset email was sent.');
           this.startScene('Title');
         })
