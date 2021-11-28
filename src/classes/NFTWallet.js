@@ -100,9 +100,7 @@ export default class NFTWallet {
     }
 
     async setAccounts(accounts) {
-        console.log(accounts)
         this.account = accounts[0] || await this.web3.eth.getAccounts();
-        console.log('updateAccounts', this.account);
         return this.addCelo();
     }
 
@@ -129,7 +127,6 @@ export default class NFTWallet {
         for (let i = 0; i < ownerNFTS.length; i++) {
           //let imageRobot = await this.handleRobotImageURI(ownerNFTS[i]);
           let robot = await robots(ownerNFTS[i]).call();
-          console.log(robot)
           /*switch (robot.robotType) {
             case "Tank":
               robot.imageRobot = "https://gateway.pinata.cloud/ipfs/QmP7bQQuXNnZXyLeQajoiX1Rnmbdutox33zqN74yiGqN2B/robot_0.png";
@@ -185,8 +182,7 @@ export default class NFTWallet {
           // gas: 5000000,
           // gasPrice: 20000000
         }).then(object => {
-          let bots = nftWallet.walletOwner();
-          game.scene.getUserBots(game.scene, bots);
+          game.resyncBots(game);
         }).catch(err => {
           console.log(err);
         });
@@ -203,15 +199,9 @@ export default class NFTWallet {
     }
 
     async handleBuyAccessory(game, nftWallet, accessoryID) {
-      console.log("WALLET ACCESSORIES")
       const { accessories, purchaseAccessory } = nftWallet.botMarketInstance.methods;
-      console.log("PRICE")
-      console.log(accessoryID)
       const accessory = await accessories(accessoryID).call();
-      console.log("CALLING")
       const accPrice = accessory.price;
-      console.log("Accessory 1's price");
-      console.log(accPrice);
     
       await purchaseAccessory(nftWallet.account, accessoryID).send({
         from: nftWallet.account,
@@ -224,8 +214,8 @@ export default class NFTWallet {
     async handleOwnerAccessories() {
       const { balanceOfBatch } = this.accessoryInstance.methods;
     
-        // for EIP1155, the balanceOfBatch function requires a pair between the address and the ID of the accessory. There are 4 accessories which is why there are 4 "this.accounts" listed.
-      const accessories = await balanceOfBatch([this.account, this.account, this.account, this.account], [0,1,2,3]).call();
+      // for EIP1155, the balanceOfBatch function requires a pair between the address and the ID of the accessory. There are 4 accessories which is why there are 4 "this.accounts" listed.
+      const accessories = await balanceOfBatch([this.account, this.account, this.account, this.account], [1,2,3,4]).call()
   
       return accessories;
     }

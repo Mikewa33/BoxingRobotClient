@@ -29,6 +29,8 @@ export default class GameScene extends Phaser.Scene {
     this.tournamentPart1 = null;
     this.tournamentPart2 = null;
     this.battleDisplay = null;
+    this.tournamentLogUi = [];
+    this.lastTournament = [];
 
     // get a reference to our socket
     this.socket = this.sys.game.globals.socket;
@@ -87,10 +89,18 @@ export default class GameScene extends Phaser.Scene {
         dropZone.graphics.lineStyle(2, 0x00ffff);
         dropZone.graphics.strokeRect(dropZone.x - dropZone.input.hitArea.width / 2, dropZone.y - dropZone.input.hitArea.height / 2, dropZone.input.hitArea.width, dropZone.input.hitArea.height);
       }
+      else if((dropZone.name == "Parts 1" || dropZone.name == "Parts 2") && gameObject.type == "Part") {
+        dropZone.graphics.lineStyle(2, 0x00ffff);
+        dropZone.graphics.strokeRect(dropZone.x - dropZone.input.hitArea.width / 2, dropZone.y - dropZone.input.hitArea.height / 2, dropZone.input.hitArea.width, dropZone.input.hitArea.height);
+      }
     });
 
     this.input.on('dragleave', function (pointer, gameObject, dropZone) {
       if ((dropZone.name == "Inventory" || dropZone.name == "Training" || dropZone.name == "Tournaments") && gameObject.type == "Robot") {
+        dropZone.graphics.lineStyle(2, 0xffff00);
+        dropZone.graphics.strokeRect(dropZone.x - dropZone.input.hitArea.width / 2, dropZone.y - dropZone.input.hitArea.height / 2, dropZone.input.hitArea.width, dropZone.input.hitArea.height);
+      }
+      else if((dropZone.name == "Parts 1" || dropZone.name == "Parts 2") && gameObject.type == "Part") {
         dropZone.graphics.lineStyle(2, 0xffff00);
         dropZone.graphics.strokeRect(dropZone.x - dropZone.input.hitArea.width / 2, dropZone.y - dropZone.input.hitArea.height / 2, dropZone.input.hitArea.width, dropZone.input.hitArea.height);
       }
@@ -105,6 +115,14 @@ export default class GameScene extends Phaser.Scene {
           gameObject.x = gameObject.input.dragStartX;
           gameObject.y = gameObject.input.dragStartY;
         }
+        else if((dropZone.name == "Inventory" || dropZone.name == "Parts 1" || dropZone.name == "Parts 2") && gameObject.type == "Part") {
+          gameObject.x = dropZone.x;
+          gameObject.y = dropZone.y;
+        }
+        else if(gameObject.type == "Part") {
+          gameObject.x = gameObject.input.dragStartX;
+          gameObject.y = gameObject.input.dragStartY;
+        }
 
         let game = dropZone.scene;
 
@@ -115,9 +133,22 @@ export default class GameScene extends Phaser.Scene {
           else if(game.tournamentBot && game.tournamentBot.id == gameObject.id) {
             game.tournamentBot = null;
           }
+          else if(game.tournamentPart1 && game.tournamentPart1.id == gameObject.id) {
+            game.tournamentPart1 = null;
+          } 
+          else if(game.tournamentPart2 && game.tournamentPart2.id == gameObject.id) {
+            game.tournamentPart2 = null;
+          }
+
           game.trainingUi = game.trainingUi.filter(el => el.id != gameObject.id);
           game.tournamentsUi = game.tournamentsUi.filter(el => el.id != gameObject.id);
-          game.robotsInventory.push(gameObject)
+          if (gameObject.type == "Part") {
+            game.parts.push(gameObject)
+          }
+          else {
+            game.robotsInventory.push(gameObject)
+          }
+          
           game.reorderCarousel(game);
         } else if(dropZone.name == "Training") {
           if (game.trainingItem != null) {
@@ -134,7 +165,26 @@ export default class GameScene extends Phaser.Scene {
             game.robotsInventory.push(game.tournamentBot);
           }
           game.tournamentBot = gameObject;
+          game.tournamentsUi.push(gameObject)
           game.robotsInventory = game.robotsInventory.filter(el => el.id != gameObject.id);
+          game.reorderCarousel(game);
+        } else if(dropZone.name == "Parts 1") {
+          if (game.tournamentPart1 != null) {
+            game.tournamentsUi = game.tournamentsUi.filter(el => el.id != game.tournamentBot.id);
+            game.parts.push(game.tournamentPart1);
+          }
+          game.tournamentPart1 = gameObject;
+          game.tournamentsUi.push(gameObject)
+          game.parts = game.parts.filter(el => el.id != gameObject.id);
+          game.reorderCarousel(game);
+        } else if(dropZone.name == "Parts 2") {
+          if (game.tournamentPart2 != null) {
+            game.tournamentsUi = game.tournamentsUi.filter(el => el.id != game.tournamentBot.id);
+            game.parts.push(game.tournamentPart2);
+          }
+          game.tournamentPart2 = gameObject;
+          game.tournamentsUi.push(gameObject)
+          game.parts = game.parts.filter(el => el.id != gameObject.id);
           game.reorderCarousel(game);
         }
     });
@@ -197,6 +247,7 @@ export default class GameScene extends Phaser.Scene {
       this.submitBot,
       1.4,
     )
+
     this.trainingUi.push(this.trainingSubmitButton);
   };
 
@@ -221,6 +272,38 @@ export default class GameScene extends Phaser.Scene {
       this.tournamentsUi.forEach(element => {
         element.setVisible(false);
       });
+    }
+    if (this.tournamentLogUi) {
+      this.tournamentLogUi.forEach(element => {
+        element.setVisible(false);
+      });
+    }
+  }
+
+  showTournamentLogUi() {
+    if (this.tournamentLogUi) {
+      this.tournamentLogUi.forEach(element => {
+        element.setVisible(true);
+      });
+    }
+    this.tournamentSubmitButton.setVisible(false);
+  }
+
+  hideTouranmentLogUi() {
+    if (this.tournamentLogUi) {
+      this.tournamentLogUi.forEach(element => {
+        element.setVisible(false);
+      });
+    }
+    this.tournamentSubmitButton.setVisible(true);
+  }
+
+  displayLogs(game) {
+    if (game.tournamentLogUi[0].visible) {
+      game.hideTouranmentLogUi() 
+    }
+    else {
+      game.showTournamentLogUi() 
     }
   }
 
@@ -267,10 +350,53 @@ export default class GameScene extends Phaser.Scene {
       1.4,
     );
 
+    this.tournamentShowLastButton = new UiButton(
+      this,
+      this.scale.width / 2,
+      this.scale.height * 0.15,
+      'button1',
+      'button2',
+      'Show Results',
+      this.displayLogs,
+      1.4,
+    );
+
+    this.resultTextBackground = this.add.rectangle(152, 133, 520, 330, 0x00000).setOrigin(0,0).setDepth(5);
+    this.resultBackground = this.make.graphics().setDepth(5);
+
+    this.resultBackground.fillRect(152, 133, 420, 300).setDepth(5);
+
+    let mask = new Phaser.Display.Masks.GeometryMask(this, this.resultBackground);
+
+    this.resultText = this.add.text(160, 280, "No Tournament Results Yet", { fontFamily: 'Arial', color: '#00ff00', wordWrap: { width: 400 } }).setOrigin(0).setDepth(5);
+
+    this.resultText.setMask(mask).setDepth(5);
+
+    //  The rectangle they can 'drag' within
+    this.resultZone = this.add.zone(152, 130, 320, 256).setOrigin(0).setInteractive().setDepth(5);
+
+    this.resultZone.on('pointermove', function (pointer) {
+        if (pointer.isDown)
+        {
+          this.scene.resultText.y += (pointer.velocity.y / 10);
+
+          //this.scene.resultText.y = Phaser.Math.Clamp(this.scene.resultText.y, -400, 300);
+        }
+
+    });
+    this.tournamentLogUi.push(this.resultTextBackground);
+    this.tournamentLogUi.push(this.resultBackground);
+    this.tournamentLogUi.push(this.resultText);
+    this.tournamentLogUi.push(this.resultZone);
+
+    this.tournamentsUi.push(this.tournamentShowLastButton);
+
     this.tournamentsUi.push(this.tournamentSubmitButton);
     this.tournamentsUi.forEach(element => {
       element.setVisible(false);
-    })
+    });
+
+
   }
 
 
@@ -413,7 +539,7 @@ export default class GameScene extends Phaser.Scene {
       this.nftWallet.handleBuyAccessory,
       1.2,
       this.nftWallet,
-      1
+      2
     );
     this.partsShopDisplay.push(this.buySwordButton);
 
@@ -427,7 +553,7 @@ export default class GameScene extends Phaser.Scene {
       this.nftWallet.handleBuyAccessory,
       1.2,
       this.nftWallet,
-      0
+      1
     );
     this.partsShopDisplay.push(this.buyBuzzsawButton);
 
@@ -441,7 +567,7 @@ export default class GameScene extends Phaser.Scene {
       this.nftWallet.handleBuyAccessory,
       1.2,
       this.nftWallet,
-      2
+      3
     );
     this.partsShopDisplay.push(this.buyShieldButton);
 
@@ -455,7 +581,7 @@ export default class GameScene extends Phaser.Scene {
       this.nftWallet.handleBuyAccessory,
       1.2,
       this.nftWallet,
-      3
+      4
     );
     this.partsShopDisplay.push(this.buyAIChipButton);
   
@@ -475,7 +601,6 @@ export default class GameScene extends Phaser.Scene {
   setShopState(game, wallet, value)
   {
     game.shopDispayMenu = value;
-    console.log(game)
     game.showShop();
   }
 
@@ -483,14 +608,18 @@ export default class GameScene extends Phaser.Scene {
     // Parts is [saw count, sword count,shield count, ai chip count]
     parts.forEach((part, index) => {
       switch(index) {
-        case "0":
+        case 0:
           game.makePartCard(game, part, "Saw");
-        case "1":
+          break;
+        case 1:
           game.makePartCard(game, part, "Sword");
-        case "2":
+          break;
+        case 2:
           game.makePartCard(game, part, "Shield");
-        case "3":
+          break;
+        case 3:
           game.makePartCard(game, part, "AI Chip");
+          break;
       }
     });
 
@@ -505,7 +634,6 @@ export default class GameScene extends Phaser.Scene {
 
   startTournament(game) {
     let botObject = game.tournamentBot;
-    console.log(botObject);
     postData(`${SERVER_URL}/set-battle`, { 
       'bot': { 
         "id": botObject.id, 
@@ -516,7 +644,20 @@ export default class GameScene extends Phaser.Scene {
         "defense": botObject.defense
       }}).then((response) => {
       if (response.status == 200) {
-
+        let combatLog = []
+        let matcheIndex = 1;
+        response.matches.forEach((match) => {
+          if (match.robotOne.id == botObject.id || match.robotTwo.id == botObject.id) {
+            combatLog.push(`Match ${matcheIndex} Starting: ${match.robotOne.id} vs ${match.robotTwo.id}`)
+            match.turns.forEach(turn => {
+              combatLog.push(turn);
+            })
+            combatLog.push(`And the Winner is ${match.winner.id}`)
+            combatLog.push("------------------")
+          }
+        })
+        console.log(combatLog);
+        game.resultText.setText(combatLog);
       }
     });
   }
@@ -530,16 +671,23 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  async resyncBots(game) {
+    let bots = await game.nftWallet.walletOwner();
+    game.getUserBots(game, bots)
+  }
+
   getUserBots(game, robots) {
+    console.log(robots)
     robots.forEach(robot => {
-      //game.load.spritesheet(robot.id.toString(), robot.imageRobot, { frameWidth: 64, frameHeight: 84 }); 
-      console.log(robot.robotType);
-      let robotCard = new RobotCard(game, 120, game.scale.height - 80, robot.robotType, 0, robot.id, robot.ai, robot.agility, robot.health, robot.defense, robot.strength)
-      robotCard.makeInvisible();
-      robotCard.setName(robot.name);
-      game.input.setDraggable(robotCard)
-      game.robots.push(robotCard)
-      game.robotsInventory.push(robotCard);
+      if(game.robotsInventory.filter(el => el.id == robot.id).length == 0) {
+        //game.load.spritesheet(robot.id.toString(), robot.imageRobot, { frameWidth: 64, frameHeight: 84 }); 
+        let robotCard = new RobotCard(game, 120, game.scale.height - 80, robot.robotType, 0, robot.id, robot.ai, robot.agility, robot.health, robot.defense, robot.strength)
+        robotCard.makeInvisible();
+        robotCard.setName(robot.name);
+        game.input.setDraggable(robotCard)
+        game.robots.push(robotCard)
+        game.robotsInventory.push(robotCard);
+      }
     });
 
     if (game.robotsInventory.length == 0 && game.inventorySelect == "ROBOTS") {
@@ -658,10 +806,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   displayPartsInventory(game){
-    console.log("PARTS DISPLAY")
     game.inventorySelect = "PARTS";
     game.robotsInventory.forEach(robot => {
-      console.log("MAKE INVISIBLE")
       robot.makeInvisible();
     });
     game.parts.forEach(part => {
@@ -671,7 +817,6 @@ export default class GameScene extends Phaser.Scene {
   }
 
   displayRobotInventory(game) {
-    console.log("ROBOT DISPLAY")
     game.inventorySelect = "ROBOTS";
     game.parts.forEach(part => {
       part.makeInvisible();
@@ -701,9 +846,7 @@ export default class GameScene extends Phaser.Scene {
     else {
       groupSelect = this.parts;
     }
-    console.log(groupSelect)
-    console.log(groupSelect[0])
-    for(var i = index;i < index + 3; i++) {
+    for(var i = index;i < index + 5; i++) {
       if (groupSelect[i]) {
         groupSelect[i].setPosition(x, game.scale.height - 80);
         groupSelect[i].makeVisible();
@@ -722,7 +865,6 @@ export default class GameScene extends Phaser.Scene {
   moveCarousel(indexMove, game) {
     let x = 150
     let groupSelect = null
-    console.log(game.inventorySelect)
     if(game.inventorySelect == "ROBOTS") {
       groupSelect = game.robotsInventory;
       if(groupSelect.length == 0) {
@@ -754,7 +896,7 @@ export default class GameScene extends Phaser.Scene {
     } 
 
     for(var i = 0;i < groupSelect.length; i++) {
-      if(groupSelect[i] && i < game.selectorIndex + 3) {
+      if(groupSelect[i] && i < game.selectorIndex + 5) {
         groupSelect[i].setPosition(x, game.scale.height - 80);
         groupSelect[i].makeVisible();
         groupSelect[i].originalX = groupSelect[i].x
